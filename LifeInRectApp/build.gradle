@@ -1,0 +1,7 @@
+if (!hasProperty('mainClass')) {
+    ext.mainClass = 'org.kelemenattila.rectlife.App'
+}
+
+dependencies {
+    compile group: 'org.jtrim', name: 'jtrim-gui', version: '1.5.0'
+}
