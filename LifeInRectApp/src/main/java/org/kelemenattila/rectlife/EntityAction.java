@@ -13,7 +13,6 @@ package org.kelemenattila.rectlife;
     BOTTOM_LEFT(AttackPosition.BOTTOM_LEFT),
     BOTTOM(AttackPosition.BOTTOM),
     BOTTOM_RIGHT(AttackPosition.BOTTOM_RIGHT),
-    SELF(AttackPosition.SELF),
     DO_NOTHING(null);
 
     private final AttackPosition action;
