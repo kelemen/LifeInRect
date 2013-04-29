@@ -43,6 +43,11 @@ public class LifeFrame extends javax.swing.JFrame {
         this.currentWorld = null;
 
         initComponents();
+
+        jAccidentRateEdit.setText(Double.toString(DEFAULT_ACCIDENT_RATE));
+        jGeneMutateRateEdit.setText(Double.toString(DEFAULT_GENE_MUTATE_RATE));
+        jWorldHeightEdit.setText(Integer.toString(DEFAULT_WORLD_HEIGHT));
+        jWorldWidthEdit.setText(Integer.toString(DEFAULT_WORLD_WIDTH));
     }
 
     private static TaskExecutorService createExecutor(String name, int threadCount) {
