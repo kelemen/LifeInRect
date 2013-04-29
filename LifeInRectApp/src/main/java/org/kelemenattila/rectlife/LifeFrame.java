@@ -2,6 +2,7 @@ package org.kelemenattila.rectlife;
 
 import java.awt.GridLayout;
 import java.util.concurrent.TimeUnit;
+import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
@@ -15,6 +16,7 @@ import org.jtrim.concurrent.TaskExecutorService;
 import org.jtrim.concurrent.ThreadPoolTaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
+import org.jtrim.utils.ExceptionHelper;
 
 /**
  *
@@ -31,7 +33,7 @@ public class LifeFrame extends javax.swing.JFrame {
     private static final long SHOW_IMAGE_STEP_MS = 1000;
 
     private CancellationController taskCanceler;
-    private ImageDisplay[] viewDisplays;
+    private final WorldViews worldViews;
     private volatile EntityWorld currentWorld;
 
     /**
@@ -39,11 +41,11 @@ public class LifeFrame extends javax.swing.JFrame {
      */
     public LifeFrame() {
         this.taskCanceler = null;
-        this.viewDisplays = null;
         this.currentWorld = null;
 
         initComponents();
 
+        worldViews = new WorldViews(jFeedbackPanel);
         jAccidentRateEdit.setText(Double.toString(DEFAULT_ACCIDENT_RATE));
         jGeneMutateRateEdit.setText(Double.toString(DEFAULT_GENE_MUTATE_RATE));
         jWorldHeightEdit.setText(Integer.toString(DEFAULT_WORLD_HEIGHT));
@@ -57,36 +59,12 @@ public class LifeFrame extends javax.swing.JFrame {
         return result;
     }
 
-    private void showWorld(EntityWorld.WorldView[] view) {
-        if (viewDisplays == null || viewDisplays.length != view.length) {
-            viewDisplays = new ImageDisplay[view.length];
-
-            jFeedbackPanel.removeAll();
-            jFeedbackPanel.setLayout(new GridLayout(view.length, 1, 0, 5));
-
-            for (int i = 0; i < view.length; i++) {
-                viewDisplays[i] = new ImageDisplay();
-                JPanel panel = new JPanel(new GridLayout(1, 1, 0, 0));
-                panel.setBorder(new TitledBorder(view[i].getCaption()));
-                panel.add(viewDisplays[i]);
-                jFeedbackPanel.add(panel);
-            }
-
-            jFeedbackPanel.revalidate();
-            jFeedbackPanel.repaint();
-        }
-
-        for (int i = 0; i < view.length; i++) {
-            viewDisplays[i].setImage(view[i].getImage());
-        }
-    }
-
     private void showWorldView(EntityWorld world, UpdateTaskExecutor executor) {
         final EntityWorld.WorldView[] view = world.viewWorld();
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                showWorld(view);
+                worldViews.showWorld(view);
             }
         });
     }
@@ -150,6 +128,46 @@ public class LifeFrame extends javax.swing.JFrame {
             return result;
         } catch (NumberFormatException ex) {
             throw new NumberFormatException(name + " must be a number within [0.0, 1.0] instead of " + strValue);
+        }
+    }
+
+    private static final class WorldViews {
+        private final JComponent container;
+        private ImageDisplay[] viewDisplays;
+        private TitledBorder[] titles;
+
+        public WorldViews(JComponent container) {
+            ExceptionHelper.checkNotNullArgument(container, "container");
+            this.container = container;
+            this.titles = null;
+            this.viewDisplays = null;
+        }
+
+        public void showWorld(EntityWorld.WorldView[] view) {
+            if (viewDisplays == null || viewDisplays.length != view.length) {
+                viewDisplays = new ImageDisplay[view.length];
+                titles = new TitledBorder[view.length];
+
+                container.removeAll();
+                container.setLayout(new GridLayout(view.length, 1, 0, 5));
+
+                for (int i = 0; i < view.length; i++) {
+                    viewDisplays[i] = new ImageDisplay();
+                    titles[i] = new TitledBorder("");
+                    JPanel panel = new JPanel(new GridLayout(1, 1, 0, 0));
+                    panel.setBorder(titles[i]);
+                    panel.add(viewDisplays[i]);
+                    container.add(panel);
+                }
+
+                container.revalidate();
+                container.repaint();
+            }
+
+            for (int i = 0; i < view.length; i++) {
+                titles[i].setTitle(view[i].getCaption());
+                viewDisplays[i].setImage(view[i].getImage());
+            }
         }
     }
 
