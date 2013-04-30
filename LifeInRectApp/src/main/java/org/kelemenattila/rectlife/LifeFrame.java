@@ -172,6 +172,7 @@ public class LifeFrame extends javax.swing.JFrame {
 
     private static final class WorldViews {
         private final JComponent container;
+        private JPanel[] panels;
         private ImageDisplay[] viewDisplays;
         private TitledBorder[] titles;
 
@@ -186,6 +187,7 @@ public class LifeFrame extends javax.swing.JFrame {
             if (viewDisplays == null || viewDisplays.length != view.length) {
                 viewDisplays = new ImageDisplay[view.length];
                 titles = new TitledBorder[view.length];
+                panels = new JPanel[view.length];
 
                 container.removeAll();
                 container.setLayout(new GridLayout(view.length, 1, 0, 5));
@@ -193,10 +195,11 @@ public class LifeFrame extends javax.swing.JFrame {
                 for (int i = 0; i < view.length; i++) {
                     viewDisplays[i] = new ImageDisplay();
                     titles[i] = new TitledBorder("");
-                    JPanel panel = new JPanel(new GridLayout(1, 1, 0, 0));
-                    panel.setBorder(titles[i]);
-                    panel.add(viewDisplays[i]);
-                    container.add(panel);
+                    panels[i] = new JPanel(new GridLayout(1, 1, 0, 0));
+
+                    panels[i].setBorder(titles[i]);
+                    panels[i].add(viewDisplays[i]);
+                    container.add(panels[i]);
                 }
 
                 container.revalidate();
@@ -206,6 +209,7 @@ public class LifeFrame extends javax.swing.JFrame {
             for (int i = 0; i < view.length; i++) {
                 titles[i].setTitle(view[i].getCaption());
                 viewDisplays[i].setImage(view[i].getImage());
+                panels[i].repaint();
             }
         }
     }
