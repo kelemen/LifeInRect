@@ -64,6 +64,6 @@ choose to use appearance as a form of communicating their similarity of genes.
 Example screen shots
 --------------------
 
-The download section contains a zipped version of some screen shots of several stages of the world. The graphs
-are set to a constant scale in order for the screen shots to be comparable (this makes it a little hard to see that
-aggressiveness against entities with different appearance are clearly higher).
+I have made some [screenshots](https://github.com/kelemen/wiki-resources/tree/LifeInRect) of several stages of the world.
+The graphs are set to a constant scale in order for the screen shots to be comparable (this makes it a little hard
+to see that aggressiveness against entities with different appearance are clearly higher).
