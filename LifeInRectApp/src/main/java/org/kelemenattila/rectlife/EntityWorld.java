@@ -10,7 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ForkJoinPool;
 import org.jtrim.utils.ExceptionHelper;
+import org.kelemenattila.rectlife.concurrent.ForkJoinUtils;
+import org.kelemenattila.rectlife.concurrent.IntRangeTask;
 
 /**
  *
@@ -22,6 +25,7 @@ public final class EntityWorld {
     private static final double DEFENDER_CHANCE_MULTIPLIER = 0.5;
     private static final Random RND = new Random();
 
+    private final ForkJoinPool algPool;
     private final int width;
     private final int height;
     private final Entity<EntityAction>[] board;
@@ -29,10 +33,12 @@ public final class EntityWorld {
     private volatile DnsCombiner geneCombiner;
     private volatile double accidentRate;
 
-    public EntityWorld(int width, int height) {
+    public EntityWorld(ForkJoinPool algPool, int width, int height) {
+        ExceptionHelper.checkNotNullArgument(algPool, "algPool");
         ExceptionHelper.checkArgumentInRange(width, 1, Integer.MAX_VALUE, "width");
         ExceptionHelper.checkArgumentInRange(height, 1, Integer.MAX_VALUE, "height");
 
+        this.algPool = algPool;
         this.width = width;
         this.height = height;
         this.board = createBoard(width, height);
@@ -353,7 +359,7 @@ public final class EntityWorld {
         avgs[index] = w0 * prevAvg + w1 * toAdd;
     }
 
-    public void getGraphs(double[] racismGraph, double[] doNothingGraph) {
+    public void getGraphs(final double[] racismGraph, final double[] doNothingGraph) {
         if (racismGraph.length != doNothingGraph.length) {
             throw new IllegalArgumentException("Arguments must have the same length.");
         }
@@ -361,8 +367,7 @@ public final class EntityWorld {
         Arrays.fill(racismGraph, 0.0);
         Arrays.fill(doNothingGraph, 0.0);
 
-        double[] neighbours = new double[8];
-        Map<EntityAction, Integer> neighbourIndex = new EnumMap<>(EntityAction.class);
+        final Map<EntityAction, Integer> neighbourIndex = new EnumMap<>(EntityAction.class);
         neighbourIndex.put(EntityAction.TOP_LEFT, 0);
         neighbourIndex.put(EntityAction.LEFT, 1);
         neighbourIndex.put(EntityAction.BOTTOM_LEFT, 2);
@@ -373,60 +378,82 @@ public final class EntityWorld {
         neighbourIndex.put(EntityAction.BOTTOM_RIGHT, 7);
 
         // graphOutput covers outputs for inputs [-1, 1]
-        double testValueMultiplier = 2.0 / ((double)racismGraph.length - 1.0);
+        final double testValueMultiplier = 2.0 / ((double)racismGraph.length - 1.0);
 
-        int[] racismCounts = new int[racismGraph.length];
-        int[] doNothingGraphCounts = new int[doNothingGraph.length];
+        final int[] racismCounts = new int[racismGraph.length];
+        final int[] doNothingGraphCounts = new int[doNothingGraph.length];
         // racismCounts, doNothingGraphCounts are initialized with zeros
 
         Set<EntityAction> testedActionsSet = EnumSet.allOf(EntityAction.class);
-        testedActionsSet.retainAll(neighbourIndex.entrySet());
-        EntityAction[] testedActions = testedActionsSet.toArray(new EntityAction[testedActionsSet.size()]);
+        testedActionsSet.retainAll(neighbourIndex.keySet());
+        final EntityAction[] testedActions
+                = testedActionsSet.toArray(new EntityAction[testedActionsSet.size()]);
 
-        for (int outputIndex = 0; outputIndex < racismGraph.length; outputIndex++) {
-            double testedValue = testValueMultiplier * outputIndex - 1.0;
+        ForkJoinUtils.forAll(algPool, 0, racismGraph.length, 1, new IntRangeTask() {
+            @Override
+            public void doWork(int startInclusive, int endExclusive) {
+                final double[] neighbours = new double[8];
 
-            for (Entity<EntityAction> entity: board) {
-                if (entity != null) {
-                    double appearance = entity.getAppearance();
-                    double minAllowed = -appearance;
-                    double maxAllowed = 1 - appearance;
-                    if (testedValue < minAllowed || testedValue > maxAllowed) {
-                        continue;
-                    }
+                for (int outputIndex = startInclusive; outputIndex < endExclusive; outputIndex++) {
+                    double testedValue = testValueMultiplier * outputIndex - 1.0;
 
-                    for (EntityAction testedAction: testedActions) {
-                        int testedIndex = neighbourIndex.get(testedAction);
-
-                        Arrays.fill(neighbours, 0.0);
-                        neighbours[testedIndex] = testedValue;
-
-                        EntityAction action = entity.thinkWithoutAging(neighbours);
-                        EntityAction.AttackPosition attack = action.getAction();
-
-                        double racist;
-                        double idle;
-                        if (attack != null) {
-                            idle = 0.0;
-                            Integer actionValue = neighbourIndex.get(action);
-                            if (actionValue != null && actionValue.intValue() == testedIndex) {
-                                racist = 1.0;
+                    // gcd(boardStep, board.length) == 1, so the loop below
+                    // loops over all elements.
+                    //
+                    // We use this tricky loop, so that contention on the
+                    // synchronized block below will be unlikely.
+                    int boardStep = board.length < Integer.MAX_VALUE
+                            ? board.length + 1
+                            : board.length - 1;
+                    int boardIndex = RND.nextInt(board.length);
+                    for (int loopCount = 0; loopCount < board.length; loopCount++) {
+                        boardIndex = (boardIndex + boardStep) % board.length;
+                        Entity<EntityAction> entity = board[boardIndex];
+                        if (entity != null) {
+                            double appearance = entity.getAppearance();
+                            double minAllowed = -appearance;
+                            double maxAllowed = 1 - appearance;
+                            if (testedValue < minAllowed || testedValue > maxAllowed) {
+                                continue;
                             }
-                            else {
-                                racist = 0.0;
+
+                            for (EntityAction testedAction: testedActions) {
+                                int testedIndex = neighbourIndex.get(testedAction);
+
+                                Arrays.fill(neighbours, 0.0);
+                                neighbours[testedIndex] = testedValue;
+
+                                EntityAction action;
+                                synchronized (entity) {
+                                    action = entity.thinkWithoutAging(neighbours);
+                                }
+                                EntityAction.AttackPosition attack = action.getAction();
+
+                                double racist;
+                                double idle;
+                                if (attack != null) {
+                                    idle = 0.0;
+                                    Integer actionValue = neighbourIndex.get(action);
+                                    if (actionValue != null && actionValue.intValue() == testedIndex) {
+                                        racist = 1.0;
+                                    }
+                                    else {
+                                        racist = 0.0;
+                                    }
+                                }
+                                else {
+                                    racist = 0.0;
+                                    idle = 1.0;
+                                }
+
+                                updateRunAvg(outputIndex, racismGraph, racismCounts, racist);
+                                updateRunAvg(outputIndex, doNothingGraph, doNothingGraphCounts, idle);
                             }
                         }
-                        else {
-                            racist = 0.0;
-                            idle = 1.0;
-                        }
-
-                        updateRunAvg(outputIndex, racismGraph, racismCounts, racist);
-                        updateRunAvg(outputIndex, doNothingGraph, doNothingGraphCounts, idle);
                     }
                 }
             }
-        }
+        });
     }
 
     public static final class WorldView {

@@ -2,6 +2,7 @@ package org.kelemenattila.rectlife;
 
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -26,6 +27,7 @@ import org.jtrim.utils.ExceptionHelper;
 @SuppressWarnings("serial")
 public class LifeFrame extends javax.swing.JFrame {
     private static final TaskExecutorService BCKG_EXECUTOR = createExecutor("LifeExecutor", 1);
+    private static final ForkJoinPool ALG_POOL = new ForkJoinPool();
 
     private static final int GRAPH_DETAIL = 10;
     private static final int DEFAULT_WORLD_WIDTH = 100;
@@ -91,7 +93,7 @@ public class LifeFrame extends javax.swing.JFrame {
         UpdateTaskExecutor imageReporter = new SwingUpdateTaskExecutor();
         UpdateTaskExecutor graphReporter = new SwingUpdateTaskExecutor();
 
-        EntityWorld world = new EntityWorld(worldWidth, worldHeight);
+        EntityWorld world = new EntityWorld(ALG_POOL, worldWidth, worldHeight);
         currentWorld = world;
         initializer.initWorld(world);
 
