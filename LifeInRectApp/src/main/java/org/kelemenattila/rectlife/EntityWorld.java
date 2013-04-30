@@ -23,6 +23,8 @@ public final class EntityWorld {
     private static final double DEFAULT_MUTATE_RATE = 0.001;
     private static final int NEURON_COUNT = 10;
     private static final double DEFAULT_DEFENDER_CHANCE_MULTIPLIER = 0.5;
+    private static final int MINIMUM_GRAPH_COUNT = 3;
+
     private static final Random RND = new Random();
 
     private final ForkJoinPool algPool;
@@ -468,8 +470,8 @@ public final class EntityWorld {
         });
 
         for (int i = 0; i < racismGraph.length; i++) {
-            if (racismCounts[i] == 0) racismGraph[i] = Double.NaN;
-            if (doNothingGraphCounts[i] == 0) doNothingGraph[i] = Double.NaN;
+            if (racismCounts[i] < MINIMUM_GRAPH_COUNT) racismGraph[i] = Double.NaN;
+            if (doNothingGraphCounts[i] < MINIMUM_GRAPH_COUNT) doNothingGraph[i] = Double.NaN;
         }
     }
 

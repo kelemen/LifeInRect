@@ -51,6 +51,7 @@ public class LifeFrame extends javax.swing.JFrame {
         this.taskCanceler = null;
         this.currentWorld = null;
         this.findGraphs = false;
+        this.graphDetail = DEFAULT_GRAPH_DETAIL;
 
         initComponents();
 
