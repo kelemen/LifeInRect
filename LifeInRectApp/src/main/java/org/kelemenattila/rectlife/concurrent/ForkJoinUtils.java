@@ -45,7 +45,7 @@ public final class ForkJoinUtils {
                 int midPoint = (endExclusive - startInclusive) / 2 + startInclusive;
                 invokeAll(
                         new ForAllAction(startInclusive, midPoint, threshold, task),
-                        new ForAllAction(midPoint + 1, endExclusive, threshold, task));
+                        new ForAllAction(midPoint, endExclusive, threshold, task));
             }
         }
     }
