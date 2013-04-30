@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import org.jtrim.collections.ArraysEx;
 import org.jtrim.utils.ExceptionHelper;
 
 /**
@@ -19,6 +18,16 @@ public final class GraphicUtils {
 
     private static int getCoordX(int width, double value) {
         return (int)Math.round(width * value);
+    }
+
+    private static double findMaxNanSafe(double[] values) {
+        double max = Double.NaN;
+        for (double value: values) {
+            if ((Double.isNaN(max) && !Double.isNaN(value)) || value > max) {
+                max = value;
+            }
+        }
+        return max;
     }
 
     public static void drawGraph(BufferedImage output, double[] values) {
@@ -35,11 +44,19 @@ public final class GraphicUtils {
 
             g2d.setColor(Color.GREEN.darker());
             g2d.setStroke(new BasicStroke(3.0f));
-            double maxValue = ArraysEx.findMax(values);
-            int currentY = getCoordY(height, values[0] / maxValue);
-            for (int i = 1; i < values.length; i++) {
-                int prevY = currentY;
-                currentY = getCoordY(height, values[i] / maxValue);
+            double maxValue = findMaxNanSafe(values);
+
+            double prevValue = Double.NaN;
+            for (int i = 0; i < values.length; i++) {
+                double currentValue = values[i];
+                if (Double.isNaN(prevValue) || Double.isNaN(currentValue)) {
+                    prevValue = currentValue;
+                    continue;
+                }
+
+                int prevY = getCoordY(height, prevValue / maxValue);
+                int currentY = getCoordY(height, currentValue / maxValue);
+                prevValue = currentValue;
 
                 int x0 = getCoordX(width, (double)(i - 1) / (double)(values.length - 1));
                 int x1 = getCoordX(width, (double)i / (double)(values.length - 1));

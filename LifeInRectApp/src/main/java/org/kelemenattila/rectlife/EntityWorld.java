@@ -454,6 +454,11 @@ public final class EntityWorld {
                 }
             }
         });
+
+        for (int i = 0; i < racismGraph.length; i++) {
+            if (racismCounts[i] == 0) racismGraph[i] = Double.NaN;
+            if (doNothingGraphCounts[i] == 0) doNothingGraph[i] = Double.NaN;
+        }
     }
 
     public static final class WorldView {
