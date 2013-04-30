@@ -5,9 +5,11 @@ import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import org.jtrim.utils.ExceptionHelper;
 
 /**
@@ -377,27 +379,28 @@ public final class EntityWorld {
         int[] doNothingGraphCounts = new int[doNothingGraph.length];
         // racismCounts, doNothingGraphCounts are initialized with zeros
 
-        EntityAction[] possibleActions = EntityAction.values();
+        Set<EntityAction> testedActionsSet = EnumSet.allOf(EntityAction.class);
+        testedActionsSet.retainAll(neighbourIndex.entrySet());
+        EntityAction[] testedActions = testedActionsSet.toArray(new EntityAction[testedActionsSet.size()]);
 
-        for (Entity<EntityAction> entity: board) {
-            if (entity != null) {
-                double appearance = entity.getAppearance();
-                for (EntityAction testedAction: possibleActions) {
-                    Integer testedIndex = neighbourIndex.get(testedAction);
-                    if (testedIndex == null) {
+        for (int outputIndex = 0; outputIndex < racismGraph.length; outputIndex++) {
+            double testedValue = testValueMultiplier * outputIndex - 1.0;
+
+            for (Entity<EntityAction> entity: board) {
+                if (entity != null) {
+                    double appearance = entity.getAppearance();
+                    double minAllowed = -appearance;
+                    double maxAllowed = 1 - appearance;
+                    if (testedValue < minAllowed || testedValue > maxAllowed) {
                         continue;
                     }
 
-                    Arrays.fill(neighbours, 0.0);
-                    double minAllowed = -appearance;
-                    double maxAllowed = 1 - appearance;
-                    for (int outputIndex = 0; outputIndex < racismGraph.length; outputIndex++) {
-                        double testedValue = testValueMultiplier * outputIndex - 1.0;
-                        if (testedValue < minAllowed || testedValue > maxAllowed) {
-                            continue;
-                        }
+                    for (EntityAction testedAction: testedActions) {
+                        int testedIndex = neighbourIndex.get(testedAction);
 
+                        Arrays.fill(neighbours, 0.0);
                         neighbours[testedIndex] = testedValue;
+
                         EntityAction action = entity.thinkWithoutAging(neighbours);
                         EntityAction.AttackPosition attack = action.getAction();
 
