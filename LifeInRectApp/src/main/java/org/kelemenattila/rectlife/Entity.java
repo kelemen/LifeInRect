@@ -62,7 +62,7 @@ public final class Entity<EntityAction> {
         this.mindState = mindState;
         this.mlp = new MLP(layers, inputCount + 1, genes);
         if (genes == null) {
-            this.mlp.randomWeights(0.0, 1.0);
+            this.mlp.randomWeights(-1.0, 1.0);
         }
 
         this.mlp.setInputs(arrayOfValue(1.0, inputCount));
