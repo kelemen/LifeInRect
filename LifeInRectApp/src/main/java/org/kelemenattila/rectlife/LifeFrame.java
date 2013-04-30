@@ -34,6 +34,7 @@ public class LifeFrame extends javax.swing.JFrame {
     private static final int DEFAULT_WORLD_HEIGHT = 100;
     private static final double DEFAULT_GENE_MUTATE_RATE = 0.001;
     private static final double DEFAULT_ACCIDENT_RATE = 0.001;
+    private static final double DEFAULT_DEFENDER_CHANCE_MULTIPLIER = 0.5;
     private static final long SHOW_IMAGE_STEP_MS = 1000;
 
     private CancellationController taskCanceler;
@@ -57,6 +58,7 @@ public class LifeFrame extends javax.swing.JFrame {
         worldViews = new WorldViews(jWorldViewContainer);
         jAccidentRateEdit.setText(Double.toString(DEFAULT_ACCIDENT_RATE));
         jGeneMutateRateEdit.setText(Double.toString(DEFAULT_GENE_MUTATE_RATE));
+        jDefenderChanceMulEdit.setText(Double.toString(DEFAULT_DEFENDER_CHANCE_MULTIPLIER));
         jWorldHeightEdit.setText(Integer.toString(DEFAULT_WORLD_HEIGHT));
         jWorldWidthEdit.setText(Integer.toString(DEFAULT_WORLD_WIDTH));
         jGraphDetailEdit.setText(Integer.toString(DEFAULT_GRAPH_DETAIL));
@@ -230,9 +232,11 @@ public class LifeFrame extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jAccidentRateEdit = new javax.swing.JTextField();
-        jApplyRatesButton = new javax.swing.JButton();
+        jApplyValuesButton = new javax.swing.JButton();
         jGeneMutateRateEdit = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        jDefenderChanceMulEdit = new javax.swing.JTextField();
         jPanel3 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jWorldWidthEdit = new javax.swing.JTextField();
@@ -259,14 +263,16 @@ public class LifeFrame extends javax.swing.JFrame {
 
         jLabel2.setText("Accident rate:");
 
-        jApplyRatesButton.setText("Apply rates");
-        jApplyRatesButton.addActionListener(new java.awt.event.ActionListener() {
+        jApplyValuesButton.setText("Apply values");
+        jApplyValuesButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jApplyRatesButtonActionPerformed(evt);
+                jApplyValuesButtonActionPerformed(evt);
             }
         });
 
         jLabel1.setText("Gene mutate rate:");
+
+        jLabel6.setText("Defender chance multiplier:");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -275,16 +281,18 @@ public class LifeFrame extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jDefenderChanceMulEdit)
                     .addComponent(jGeneMutateRateEdit)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addComponent(jLabel2))
-                        .addGap(0, 84, Short.MAX_VALUE))
                     .addComponent(jAccidentRateEdit)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jApplyRatesButton)))
+                        .addComponent(jApplyValuesButton))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel6))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -298,8 +306,12 @@ public class LifeFrame extends javax.swing.JFrame {
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jAccidentRateEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jApplyRatesButton)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel6)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jDefenderChanceMulEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jApplyValuesButton)
                 .addContainerGap())
         );
 
@@ -375,7 +387,7 @@ public class LifeFrame extends javax.swing.JFrame {
                 .addComponent(jStepCaption)
                 .addGap(18, 18, 18)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel5)
@@ -398,7 +410,7 @@ public class LifeFrame extends javax.swing.JFrame {
         );
         jWorldViewContainerLayout.setVerticalGroup(
             jWorldViewContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 424, Short.MAX_VALUE)
+            .addGap(0, 456, Short.MAX_VALUE)
         );
 
         jFeedbackPanel.add(jWorldViewContainer);
@@ -411,7 +423,7 @@ public class LifeFrame extends javax.swing.JFrame {
         );
         jGraphsContainerLayout.setVerticalGroup(
             jGraphsContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 424, Short.MAX_VALUE)
+            .addGap(0, 456, Short.MAX_VALUE)
         );
 
         jFeedbackPanel.add(jGraphsContainer);
@@ -432,7 +444,7 @@ public class LifeFrame extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jFeedbackPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jFeedbackPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -451,12 +463,14 @@ public class LifeFrame extends javax.swing.JFrame {
             final int worldHeight;
             final double mutateRate;
             final double accidentRate;
+            final double defenderChanceMul;
 
             try {
                 worldWidth = readPositiveIntFromEdit(jWorldWidthEdit, "World width");
                 worldHeight = readPositiveIntFromEdit(jWorldHeightEdit, "World height");
                 mutateRate = readProbabilityFromEdit(jGeneMutateRateEdit, "Gene mutate rate");
                 accidentRate = readProbabilityFromEdit(jAccidentRateEdit, "Accident rate");
+                defenderChanceMul = readProbabilityFromEdit(jDefenderChanceMulEdit, "Defender chance multiplier");
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Input error", JOptionPane.ERROR_MESSAGE);
                 return;
@@ -474,6 +488,7 @@ public class LifeFrame extends javax.swing.JFrame {
                         public void initWorld(EntityWorld world) {
                             world.setAccidentRate(accidentRate);
                             world.setMutateRate(mutateRate);
+                            world.setDefenderChangeMultiplier(defenderChanceMul);
                         }
                     });
                 }
@@ -481,7 +496,7 @@ public class LifeFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jStartStopButtonActionPerformed
 
-    private void jApplyRatesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jApplyRatesButtonActionPerformed
+    private void jApplyValuesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jApplyValuesButtonActionPerformed
         EntityWorld world = currentWorld;
         if (world == null) {
             return;
@@ -490,13 +505,15 @@ public class LifeFrame extends javax.swing.JFrame {
         try {
             double mutateRate = readProbabilityFromEdit(jGeneMutateRateEdit, "Gene mutate rate");
             double accidentRate = readProbabilityFromEdit(jAccidentRateEdit, "Accident rate");
+            double defenderChanceMul = readProbabilityFromEdit(jDefenderChanceMulEdit, "Defender chance multiplier");
 
             world.setMutateRate(mutateRate);
             world.setAccidentRate(accidentRate);
+            world.setDefenderChangeMultiplier(defenderChanceMul);
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Input error", JOptionPane.ERROR_MESSAGE);
         }
-    }//GEN-LAST:event_jApplyRatesButtonActionPerformed
+    }//GEN-LAST:event_jApplyValuesButtonActionPerformed
 
     private void jFetchGraphButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFetchGraphButtonActionPerformed
         try {
@@ -513,7 +530,8 @@ public class LifeFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField jAccidentRateEdit;
-    private javax.swing.JButton jApplyRatesButton;
+    private javax.swing.JButton jApplyValuesButton;
+    private javax.swing.JTextField jDefenderChanceMulEdit;
     private javax.swing.JPanel jFeedbackPanel;
     private javax.swing.JButton jFetchGraphButton;
     private javax.swing.JTextField jGeneMutateRateEdit;
@@ -524,6 +542,7 @@ public class LifeFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;

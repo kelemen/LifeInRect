@@ -22,7 +22,7 @@ import org.kelemenattila.rectlife.concurrent.IntRangeTask;
 public final class EntityWorld {
     private static final double DEFAULT_MUTATE_RATE = 0.001;
     private static final int NEURON_COUNT = 10;
-    private static final double DEFENDER_CHANCE_MULTIPLIER = 0.5;
+    private static final double DEFAULT_DEFENDER_CHANCE_MULTIPLIER = 0.5;
     private static final Random RND = new Random();
 
     private final ForkJoinPool algPool;
@@ -32,6 +32,7 @@ public final class EntityWorld {
     private final BoardPos[][] fighters;
     private volatile DnsCombiner geneCombiner;
     private volatile double accidentRate;
+    private volatile double defenderChangeMultiplier;
 
     public EntityWorld(ForkJoinPool algPool, int width, int height) {
         ExceptionHelper.checkNotNullArgument(algPool, "algPool");
@@ -45,8 +46,13 @@ public final class EntityWorld {
         this.fighters = new BoardPos[width * height][8];
         this.geneCombiner = new StandardGeneticCombiner(DEFAULT_MUTATE_RATE);
         this.accidentRate = 0.001;
+        this.defenderChangeMultiplier = DEFAULT_DEFENDER_CHANCE_MULTIPLIER;
 
         fillBoard();
+    }
+
+    public void setDefenderChangeMultiplier(double defenderChangeMultiplier) {
+        this.defenderChangeMultiplier = defenderChangeMultiplier;
     }
 
     public void setAccidentRate(double accidentRate) {
@@ -132,6 +138,8 @@ public final class EntityWorld {
     }
 
     private void resolveFight() {
+        double currentDefChanceMul = defenderChangeMultiplier;
+
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 BoardPos[] positions = fighters[y * width + x];
@@ -144,7 +152,7 @@ public final class EntityWorld {
                 }
 
                 if (count > 0) {
-                    double defenderChance = DEFENDER_CHANCE_MULTIPLIER / (double)(count + 1);
+                    double defenderChance = currentDefChanceMul / (double)(count + 1);
                     if (Math.random() < defenderChance) {
                         setEntity(0, 0, null);
                     }
