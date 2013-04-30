@@ -202,12 +202,11 @@ public final class EntityWorld {
         }
     }
 
-    private boolean breedPopulationSingleStep() {
+    private void breedPopulationSingleStep() {
         List<BoardPos> neighbours = new ArrayList<>();
         List<BoardPos> otherNeighbours = new ArrayList<>();
 
         DnsCombiner currentCombiner = geneCombiner;
-        boolean didSomething = false;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 Entity<EntityAction> entity = getEntity(x, y);
@@ -226,7 +225,6 @@ public final class EntityWorld {
                     getNeighbours(entity1Pos.x, entity1Pos.y, otherNeighbours);
 
                     if (!otherNeighbours.isEmpty()) {
-                        didSomething = true;
                         int choseIndex2 = RND.nextInt(otherNeighbours.size());
                         BoardPos entity2Pos = otherNeighbours.get(choseIndex2);
 
@@ -242,13 +240,10 @@ public final class EntityWorld {
                 }
             }
         }
-        return didSomething;
     }
 
     private void breedPopulation() {
-        while (breedPopulationSingleStep()) {
-            // Do nothing but loop until there is nothing to change.
-        }
+        breedPopulationSingleStep();
     }
 
     private void resolveAccidents() {
