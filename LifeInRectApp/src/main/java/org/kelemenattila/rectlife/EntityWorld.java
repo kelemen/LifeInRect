@@ -274,7 +274,7 @@ public final class EntityWorld {
                 int color;
 
                 if (entity != null) {
-                    int grayLevel = (int)(entity.getAppearance() * 256.0);
+                    int grayLevel = (int)(entity.getAppearance(0.0, 1.0) * 256.0);
                     grayLevel = Math.max(0, Math.min(grayLevel, 0xFF));
                     color = grayLevel | (grayLevel << 8) | (grayLevel << 16) | 0xFF00_0000;
                 }
@@ -377,8 +377,11 @@ public final class EntityWorld {
         neighbourIndex.put(EntityAction.RIGHT, 6);
         neighbourIndex.put(EntityAction.BOTTOM_RIGHT, 7);
 
-        // graphOutput covers outputs for inputs [-1, 1]
-        final double testValueMultiplier = 2.0 / ((double)racismGraph.length - 1.0);
+        final double lowRelAppearance = Entity.MIN_APPEARANCE - Entity.MAX_APPEARANCE;
+        final double highRelAppearance = Entity.MAX_APPEARANCE - Entity.MIN_APPEARANCE;
+
+        final double testValueMultiplier =
+                (highRelAppearance - lowRelAppearance) / ((double)racismGraph.length - 1.0);
 
         final int[] racismCounts = new int[racismGraph.length];
         final int[] doNothingGraphCounts = new int[doNothingGraph.length];
@@ -395,7 +398,7 @@ public final class EntityWorld {
                 final double[] neighbours = new double[8];
 
                 for (int outputIndex = startInclusive; outputIndex < endExclusive; outputIndex++) {
-                    double testedValue = testValueMultiplier * outputIndex - 1.0;
+                    double testedValue = testValueMultiplier * outputIndex + lowRelAppearance;
 
                     // gcd(boardStep, board.length) == 1, so the loop below
                     // loops over all elements.
@@ -411,8 +414,8 @@ public final class EntityWorld {
                         Entity<EntityAction> entity = board[boardIndex];
                         if (entity != null) {
                             double appearance = entity.getAppearance();
-                            double minAllowed = -appearance;
-                            double maxAllowed = 1 - appearance;
+                            double minAllowed = Entity.MIN_APPEARANCE - appearance;
+                            double maxAllowed = Entity.MAX_APPEARANCE - appearance;
                             if (testedValue < minAllowed || testedValue > maxAllowed) {
                                 continue;
                             }

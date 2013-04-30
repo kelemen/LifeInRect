@@ -13,6 +13,9 @@ import org.kelemenattila.rectlife.neural.SigmoidNeuron;
  * @author Kelemen Attila
  */
 public final class Entity<EntityAction> {
+    public static final double MIN_APPEARANCE = -1.0;
+    public static final double MAX_APPEARANCE = 1.0;
+
     private static final double LAMBDA = 1.0;
     private static final double INITIAL_MIND_STATE = 1.0;
 
@@ -70,7 +73,13 @@ public final class Entity<EntityAction> {
     }
 
     private static double normalizeAppearance(double value) {
-        return value - Math.floor(value);
+        double result = Math.signum(value) * (value - Math.floor(value));
+        // result is now between -1.0 and 1.0
+
+        result = (result + 1.0) / 2.0;
+        // result is now between 0.0 and 1.0
+
+        return result * (MAX_APPEARANCE - MIN_APPEARANCE) + MIN_APPEARANCE;
     }
 
     private static double[] arrayOfValue(double value, int count) {
@@ -83,6 +92,11 @@ public final class Entity<EntityAction> {
 
     public double getAppearance() {
         return appearance;
+    }
+
+    public double getAppearance(double minValue, double maxValue) {
+        double result = (appearance - MIN_APPEARANCE) / (MAX_APPEARANCE - MIN_APPEARANCE);
+        return result * (maxValue - minValue) + minValue;
     }
 
     public long getAge() {
