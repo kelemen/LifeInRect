@@ -89,6 +89,24 @@ public class LifeFrame extends javax.swing.JFrame {
         return new EntityWorld.WorldView(caption + " (max = " + max + ")", image);
     }
 
+    private void showGraphs(EntityWorld world, UpdateTaskExecutor executor) {
+        int detail = graphDetail;
+        double[] racismGraph = new double[detail];
+        double[] doNothingGraph = new double[detail];
+        world.getGraphs(racismGraph, doNothingGraph);
+
+        final EntityWorld.WorldView[] currentGraphViews = new EntityWorld.WorldView[] {
+            createViewOfGraph("Racism", racismGraph),
+            createViewOfGraph("Inactive", doNothingGraph),
+        };
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                graphViews.showWorld(currentGraphViews);
+            }
+        });
+    }
+
     private void runWorld(
             CancellationToken cancelToken,
             int worldWidth,
@@ -104,6 +122,7 @@ public class LifeFrame extends javax.swing.JFrame {
         initializer.initWorld(world);
 
         showWorldView(world, imageReporter);
+        showGraphs(world, graphReporter);
 
         long stepIndex = 0;
         long lastShowTime = System.nanoTime();
@@ -126,22 +145,7 @@ public class LifeFrame extends javax.swing.JFrame {
 
             if (findGraphs) {
                 findGraphs = false;
-
-                int detail = graphDetail;
-                double[] racismGraph = new double[detail];
-                double[] doNothingGraph = new double[detail];
-                world.getGraphs(racismGraph, doNothingGraph);
-
-                final EntityWorld.WorldView[] currentGraphViews = new EntityWorld.WorldView[] {
-                    createViewOfGraph("Racism", racismGraph),
-                    createViewOfGraph("Inactive", doNothingGraph),
-                };
-                graphReporter.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        graphViews.showWorld(currentGraphViews);
-                    }
-                });
+                showGraphs(world, graphReporter);
             }
         }
     }
