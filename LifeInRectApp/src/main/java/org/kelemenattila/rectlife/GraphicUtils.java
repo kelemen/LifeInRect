@@ -20,7 +20,7 @@ public final class GraphicUtils {
         return (int)Math.round(width * value);
     }
 
-    public static void drawGraph(BufferedImage output, double[] values) {
+    public static void drawGraph(BufferedImage output, double minValue, double maxValue, double[] values) {
         ExceptionHelper.checkArgumentInRange(values.length, 1, Integer.MAX_VALUE, "values.length");
 
         Graphics2D g2d = output.createGraphics();
@@ -34,7 +34,8 @@ public final class GraphicUtils {
 
             g2d.setColor(Color.GREEN.darker());
             g2d.setStroke(new BasicStroke(3.0f));
-            double maxValue = DoubleUtils.findMaxNanSafe(values);
+
+            double dValue = maxValue - minValue;
 
             double prevValue = Double.NaN;
             for (int i = 0; i < values.length; i++) {
@@ -44,8 +45,8 @@ public final class GraphicUtils {
                     continue;
                 }
 
-                int prevY = getCoordY(height, prevValue / maxValue);
-                int currentY = getCoordY(height, currentValue / maxValue);
+                int prevY = getCoordY(height, (prevValue - minValue) / dValue);
+                int currentY = getCoordY(height, (currentValue - minValue) / dValue);
                 prevValue = currentValue;
 
                 int x0 = getCoordX(width, (double)(i - 1) / (double)(values.length - 1));

@@ -84,7 +84,7 @@ public class LifeFrame extends javax.swing.JFrame {
 
     private EntityWorld.WorldView createViewOfGraph(String caption, double[] graph) {
         BufferedImage image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
-        GraphicUtils.drawGraph(image, graph);
+        GraphicUtils.drawGraph(image, 0.0, 1.0, graph);
         double max = DoubleUtils.findMaxNanSafe(graph);
 
         return new EntityWorld.WorldView(caption + " (max = " + max + ")", image);
