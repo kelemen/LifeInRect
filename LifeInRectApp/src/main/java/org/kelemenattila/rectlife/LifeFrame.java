@@ -488,7 +488,7 @@ public class LifeFrame extends javax.swing.JFrame {
                         public void initWorld(EntityWorld world) {
                             world.setAccidentRate(accidentRate);
                             world.setMutateRate(mutateRate);
-                            world.setDefenderChangeMultiplier(defenderChanceMul);
+                            world.setDefenderChanceMultiplier(defenderChanceMul);
                         }
                     });
                 }
@@ -509,7 +509,7 @@ public class LifeFrame extends javax.swing.JFrame {
 
             world.setMutateRate(mutateRate);
             world.setAccidentRate(accidentRate);
-            world.setDefenderChangeMultiplier(defenderChanceMul);
+            world.setDefenderChanceMultiplier(defenderChanceMul);
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Input error", JOptionPane.ERROR_MESSAGE);
         }

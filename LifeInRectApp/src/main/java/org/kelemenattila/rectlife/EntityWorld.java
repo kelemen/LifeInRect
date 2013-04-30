@@ -32,7 +32,7 @@ public final class EntityWorld {
     private final BoardPos[][] fighters;
     private volatile DnsCombiner geneCombiner;
     private volatile double accidentRate;
-    private volatile double defenderChangeMultiplier;
+    private volatile double defenderChanceMultiplier;
 
     public EntityWorld(ForkJoinPool algPool, int width, int height) {
         ExceptionHelper.checkNotNullArgument(algPool, "algPool");
@@ -46,13 +46,13 @@ public final class EntityWorld {
         this.fighters = new BoardPos[width * height][8];
         this.geneCombiner = new StandardGeneticCombiner(DEFAULT_MUTATE_RATE);
         this.accidentRate = 0.001;
-        this.defenderChangeMultiplier = DEFAULT_DEFENDER_CHANCE_MULTIPLIER;
+        this.defenderChanceMultiplier = DEFAULT_DEFENDER_CHANCE_MULTIPLIER;
 
         fillBoard();
     }
 
-    public void setDefenderChangeMultiplier(double defenderChangeMultiplier) {
-        this.defenderChangeMultiplier = defenderChangeMultiplier;
+    public void setDefenderChanceMultiplier(double defenderChanceMultiplier) {
+        this.defenderChanceMultiplier = defenderChanceMultiplier;
     }
 
     public void setAccidentRate(double accidentRate) {
@@ -138,7 +138,7 @@ public final class EntityWorld {
     }
 
     private void resolveFight() {
-        double currentDefChanceMul = defenderChangeMultiplier;
+        double currentDefChanceMul = defenderChanceMultiplier;
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
