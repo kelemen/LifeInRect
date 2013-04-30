@@ -82,9 +82,9 @@ public class LifeFrame extends javax.swing.JFrame {
         });
     }
 
-    private EntityWorld.WorldView createViewOfGraph(String caption, double[] graph) {
+    private EntityWorld.WorldView createViewOfGraph(String caption, double minValue, double maxValue, double[] graph) {
         BufferedImage image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
-        GraphicUtils.drawGraph(image, 0.0, 1.0, graph);
+        GraphicUtils.drawGraph(image, minValue, maxValue, graph);
         double max = DoubleUtils.findMaxNanSafe(graph);
 
         return new EntityWorld.WorldView(caption + " (max = " + max + ")", image);
@@ -97,8 +97,8 @@ public class LifeFrame extends javax.swing.JFrame {
         world.getGraphs(racismGraph, doNothingGraph);
 
         final EntityWorld.WorldView[] currentGraphViews = new EntityWorld.WorldView[] {
-            createViewOfGraph("Racism", racismGraph),
-            createViewOfGraph("Inactive", doNothingGraph),
+            createViewOfGraph("Racism", 0.0, 0.1, racismGraph),
+            createViewOfGraph("Inactive", 0.6, 1.0, doNothingGraph),
         };
         executor.execute(new Runnable() {
             @Override
