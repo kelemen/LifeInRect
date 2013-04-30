@@ -3,7 +3,10 @@ package org.kelemenattila.rectlife;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import org.jtrim.utils.ExceptionHelper;
 
@@ -334,6 +337,93 @@ public final class EntityWorld {
             createAppearanceView(),
             createAgeView()
         };
+    }
+
+    private static void updateRunAvg(int index, double[] avgs, int[] counts, double toAdd) {
+        int prevCount = counts[index];
+        int nextCount = prevCount + 1;
+        counts[index] = nextCount;
+
+        double prevAvg = avgs[index];
+
+        double w0 = (double)prevCount / (double)nextCount;
+        double w1 = 1.0 / (double)nextCount;
+        avgs[index] = w0 * prevAvg + w1 * toAdd;
+    }
+
+    public void getGraphs(double[] racismGraph, double[] doNothingGraph) {
+        if (racismGraph.length != doNothingGraph.length) {
+            throw new IllegalArgumentException("Arguments must have the same length.");
+        }
+
+        Arrays.fill(racismGraph, 0.0);
+        Arrays.fill(doNothingGraph, 0.0);
+
+        double[] neighbours = new double[8];
+        Map<EntityAction, Integer> neighbourIndex = new EnumMap<>(EntityAction.class);
+        neighbourIndex.put(EntityAction.TOP_LEFT, 0);
+        neighbourIndex.put(EntityAction.LEFT, 1);
+        neighbourIndex.put(EntityAction.BOTTOM_LEFT, 2);
+        neighbourIndex.put(EntityAction.TOP, 3);
+        neighbourIndex.put(EntityAction.BOTTOM, 4);
+        neighbourIndex.put(EntityAction.TOP_RIGHT, 5);
+        neighbourIndex.put(EntityAction.RIGHT, 6);
+        neighbourIndex.put(EntityAction.BOTTOM_RIGHT, 7);
+
+        // graphOutput covers outputs for inputs [-1, 1]
+        double testValueMultiplier = 2.0 / ((double)racismGraph.length - 1.0);
+
+        int[] racismCounts = new int[racismGraph.length];
+        int[] doNothingGraphCounts = new int[doNothingGraph.length];
+        // racismCounts, doNothingGraphCounts are initialized with zeros
+
+        EntityAction[] possibleActions = EntityAction.values();
+
+        for (Entity<EntityAction> entity: board) {
+            if (entity != null) {
+                double appearance = entity.getAppearance();
+                for (EntityAction testedAction: possibleActions) {
+                    Integer testedIndex = neighbourIndex.get(testedAction);
+                    if (testedIndex == null) {
+                        continue;
+                    }
+
+                    Arrays.fill(neighbours, 0.0);
+                    double minAllowed = -appearance;
+                    double maxAllowed = 1 - appearance;
+                    for (int outputIndex = 0; outputIndex < racismGraph.length; outputIndex++) {
+                        double testedValue = testValueMultiplier * outputIndex - 1.0;
+                        if (testedValue < minAllowed || testedValue > maxAllowed) {
+                            continue;
+                        }
+
+                        neighbours[testedIndex] = testedValue;
+                        EntityAction action = entity.thinkWithoutAging(neighbours);
+                        EntityAction.AttackPosition attack = action.getAction();
+
+                        double racist;
+                        double idle;
+                        if (attack != null) {
+                            idle = 0.0;
+                            Integer actionValue = neighbourIndex.get(action);
+                            if (actionValue != null && actionValue.intValue() == testedIndex) {
+                                racist = 1.0;
+                            }
+                            else {
+                                racist = 0.0;
+                            }
+                        }
+                        else {
+                            racist = 0.0;
+                            idle = 1.0;
+                        }
+
+                        updateRunAvg(outputIndex, racismGraph, racismCounts, racist);
+                        updateRunAvg(outputIndex, doNothingGraph, doNothingGraphCounts, idle);
+                    }
+                }
+            }
+        }
     }
 
     public static final class WorldView {

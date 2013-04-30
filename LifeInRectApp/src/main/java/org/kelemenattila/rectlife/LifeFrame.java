@@ -1,6 +1,7 @@
 package org.kelemenattila.rectlife;
 
 import java.awt.GridLayout;
+import java.awt.image.BufferedImage;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -26,6 +27,7 @@ import org.jtrim.utils.ExceptionHelper;
 public class LifeFrame extends javax.swing.JFrame {
     private static final TaskExecutorService BCKG_EXECUTOR = createExecutor("LifeExecutor", 1);
 
+    private static final int GRAPH_DETAIL = 10;
     private static final int DEFAULT_WORLD_WIDTH = 100;
     private static final int DEFAULT_WORLD_HEIGHT = 100;
     private static final double DEFAULT_GENE_MUTATE_RATE = 0.001;
@@ -34,7 +36,9 @@ public class LifeFrame extends javax.swing.JFrame {
 
     private CancellationController taskCanceler;
     private final WorldViews worldViews;
+    private final WorldViews graphViews;
     private volatile EntityWorld currentWorld;
+    private volatile boolean findGraphs;
 
     /**
      * Creates new form LifeFrame
@@ -42,10 +46,12 @@ public class LifeFrame extends javax.swing.JFrame {
     public LifeFrame() {
         this.taskCanceler = null;
         this.currentWorld = null;
+        this.findGraphs = false;
 
         initComponents();
 
-        worldViews = new WorldViews(jFeedbackPanel);
+        graphViews = new WorldViews(jGraphsContainer);
+        worldViews = new WorldViews(jWorldViewContainer);
         jAccidentRateEdit.setText(Double.toString(DEFAULT_ACCIDENT_RATE));
         jGeneMutateRateEdit.setText(Double.toString(DEFAULT_GENE_MUTATE_RATE));
         jWorldHeightEdit.setText(Integer.toString(DEFAULT_WORLD_HEIGHT));
@@ -69,6 +75,12 @@ public class LifeFrame extends javax.swing.JFrame {
         });
     }
 
+    private EntityWorld.WorldView createViewOfGraph(String caption, double[] graph) {
+        BufferedImage image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
+        GraphicUtils.drawGraph(image, graph);
+        return new EntityWorld.WorldView(caption, image);
+    }
+
     private void runWorld(
             CancellationToken cancelToken,
             int worldWidth,
@@ -77,6 +89,7 @@ public class LifeFrame extends javax.swing.JFrame {
 
         UpdateTaskExecutor progressReporter = new SwingUpdateTaskExecutor();
         UpdateTaskExecutor imageReporter = new SwingUpdateTaskExecutor();
+        UpdateTaskExecutor graphReporter = new SwingUpdateTaskExecutor();
 
         EntityWorld world = new EntityWorld(worldWidth, worldHeight);
         currentWorld = world;
@@ -102,6 +115,25 @@ public class LifeFrame extends javax.swing.JFrame {
                     jStepCaption.setText("Step: " + currentStepIndex);
                 }
             });
+
+            if (findGraphs) {
+                findGraphs = false;
+
+                double[] racismGraph = new double[GRAPH_DETAIL];
+                double[] doNothingGraph = new double[GRAPH_DETAIL];
+                world.getGraphs(racismGraph, doNothingGraph);
+
+                final EntityWorld.WorldView[] currentGraphViews = new EntityWorld.WorldView[] {
+                    createViewOfGraph("Racism", racismGraph),
+                    createViewOfGraph("Inactive", doNothingGraph),
+                };
+                graphReporter.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        graphViews.showWorld(currentGraphViews);
+                    }
+                });
+            }
         }
     }
 
@@ -195,7 +227,10 @@ public class LifeFrame extends javax.swing.JFrame {
         jWorldWidthEdit = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
         jWorldHeightEdit = new javax.swing.JTextField();
+        jFetchGraphButton = new javax.swing.JButton();
         jFeedbackPanel = new javax.swing.JPanel();
+        jWorldViewContainer = new javax.swing.JPanel();
+        jGraphsContainer = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Life in Rect");
@@ -286,8 +321,15 @@ public class LifeFrame extends javax.swing.JFrame {
                 .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jWorldHeightEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(28, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        jFetchGraphButton.setText("Get graphs");
+        jFetchGraphButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jFetchGraphButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -295,9 +337,13 @@ public class LifeFrame extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(jFetchGraphButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jStartStopButton))
             .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jStepCaption)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(jStepCaption)
+                .addGap(0, 0, Short.MAX_VALUE))
             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
@@ -309,20 +355,39 @@ public class LifeFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jStartStopButton)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jStartStopButton)
+                    .addComponent(jFetchGraphButton))
                 .addContainerGap())
         );
 
-        javax.swing.GroupLayout jFeedbackPanelLayout = new javax.swing.GroupLayout(jFeedbackPanel);
-        jFeedbackPanel.setLayout(jFeedbackPanelLayout);
-        jFeedbackPanelLayout.setHorizontalGroup(
-            jFeedbackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 353, Short.MAX_VALUE)
+        jFeedbackPanel.setLayout(new java.awt.GridLayout(1, 2));
+
+        javax.swing.GroupLayout jWorldViewContainerLayout = new javax.swing.GroupLayout(jWorldViewContainer);
+        jWorldViewContainer.setLayout(jWorldViewContainerLayout);
+        jWorldViewContainerLayout.setHorizontalGroup(
+            jWorldViewContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 176, Short.MAX_VALUE)
         );
-        jFeedbackPanelLayout.setVerticalGroup(
-            jFeedbackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+        jWorldViewContainerLayout.setVerticalGroup(
+            jWorldViewContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 384, Short.MAX_VALUE)
         );
+
+        jFeedbackPanel.add(jWorldViewContainer);
+
+        javax.swing.GroupLayout jGraphsContainerLayout = new javax.swing.GroupLayout(jGraphsContainer);
+        jGraphsContainer.setLayout(jGraphsContainerLayout);
+        jGraphsContainerLayout.setHorizontalGroup(
+            jGraphsContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 176, Short.MAX_VALUE)
+        );
+        jGraphsContainerLayout.setVerticalGroup(
+            jGraphsContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 384, Short.MAX_VALUE)
+        );
+
+        jFeedbackPanel.add(jGraphsContainer);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -332,7 +397,7 @@ public class LifeFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jFeedbackPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jFeedbackPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -406,6 +471,10 @@ public class LifeFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jApplyRatesButtonActionPerformed
 
+    private void jFetchGraphButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFetchGraphButtonActionPerformed
+        findGraphs = true;
+    }//GEN-LAST:event_jFetchGraphButtonActionPerformed
+
     private interface WorldInitializer {
         public void initWorld(EntityWorld world);
     }
@@ -414,7 +483,9 @@ public class LifeFrame extends javax.swing.JFrame {
     private javax.swing.JTextField jAccidentRateEdit;
     private javax.swing.JButton jApplyRatesButton;
     private javax.swing.JPanel jFeedbackPanel;
+    private javax.swing.JButton jFetchGraphButton;
     private javax.swing.JTextField jGeneMutateRateEdit;
+    private javax.swing.JPanel jGraphsContainer;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -425,6 +496,7 @@ public class LifeFrame extends javax.swing.JFrame {
     private javax.swing.JButton jStartStopButton;
     private javax.swing.JLabel jStepCaption;
     private javax.swing.JTextField jWorldHeightEdit;
+    private javax.swing.JPanel jWorldViewContainer;
     private javax.swing.JTextField jWorldWidthEdit;
     // End of variables declaration//GEN-END:variables
 }

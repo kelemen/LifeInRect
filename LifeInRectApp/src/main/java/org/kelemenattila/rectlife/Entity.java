@@ -89,7 +89,7 @@ public final class Entity<EntityAction> {
         return age;
     }
 
-    public EntityAction think(double[] neighbours) {
+    private double[] getOutputs(double[] neighbours) {
         ExceptionHelper.checkArgumentInRange(neighbours.length, inputCount, inputCount, "neighbours.length");
 
         double[] inputs = new double[neighbours.length + 1];
@@ -99,9 +99,10 @@ public final class Entity<EntityAction> {
         mlp.setInputs(inputs);
         double[] outputs = mlp.getOutputs();
 
-        mindState = outputs[OUTPUT_OFFSET_NEW_MIND_STATE];
-        age++;
+        return outputs;
+    }
 
+    private EntityAction chooseActionBasedOnOutputs(double[] outputs) {
         int chosenIndex = 0;
         for (int i = 1; i < actions.length; i++) {
             double actionWeight = outputs[OUTPUT_OFFSET_ACTIONS + i];
@@ -111,6 +112,19 @@ public final class Entity<EntityAction> {
         }
 
         return actions[chosenIndex];
+    }
+
+    public EntityAction think(double[] neighbours) {
+        double[] outputs = getOutputs(neighbours);
+
+        mindState = outputs[OUTPUT_OFFSET_NEW_MIND_STATE];
+        age++;
+
+        return chooseActionBasedOnOutputs(outputs);
+    }
+
+    public EntityAction thinkWithoutAging(double[] neighbours) {
+        return chooseActionBasedOnOutputs(getOutputs(neighbours));
     }
 
     public Entity<EntityAction> breed(Entity<EntityAction> other, DnsCombiner combiner) {
