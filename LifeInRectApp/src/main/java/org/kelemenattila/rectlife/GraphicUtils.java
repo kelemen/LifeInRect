@@ -20,16 +20,6 @@ public final class GraphicUtils {
         return (int)Math.round(width * value);
     }
 
-    private static double findMaxNanSafe(double[] values) {
-        double max = Double.NaN;
-        for (double value: values) {
-            if ((Double.isNaN(max) && !Double.isNaN(value)) || value > max) {
-                max = value;
-            }
-        }
-        return max;
-    }
-
     public static void drawGraph(BufferedImage output, double[] values) {
         ExceptionHelper.checkArgumentInRange(values.length, 1, Integer.MAX_VALUE, "values.length");
 
@@ -44,7 +34,7 @@ public final class GraphicUtils {
 
             g2d.setColor(Color.GREEN.darker());
             g2d.setStroke(new BasicStroke(3.0f));
-            double maxValue = findMaxNanSafe(values);
+            double maxValue = DoubleUtils.findMaxNanSafe(values);
 
             double prevValue = Double.NaN;
             for (int i = 0; i < values.length; i++) {
