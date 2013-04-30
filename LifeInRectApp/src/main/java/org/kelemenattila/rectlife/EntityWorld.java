@@ -143,21 +143,22 @@ public final class EntityWorld {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 BoardPos[] positions = fighters[y * width + x];
-                int count = 0;
+                int attackerCount = 0;
                 for (BoardPos pos: positions) {
                     if (pos == null) {
                         break;
                     }
-                    count++;
+                    attackerCount++;
                 }
 
-                if (count > 0) {
-                    double defenderChance = currentDefChanceMul / (double)(count + 1);
+                if (attackerCount > 0) {
+                    double count = attackerCount + 1;
+                    double defenderChance = (currentDefChanceMul / count) * (count - 1.0);
                     if (Math.random() < defenderChance) {
                         setEntity(0, 0, null);
                     }
                     else {
-                        BoardPos toKill = positions[RND.nextInt(count)];
+                        BoardPos toKill = positions[RND.nextInt(attackerCount)];
                         setEntity(toKill.x, toKill.y, null);
                     }
                 }
