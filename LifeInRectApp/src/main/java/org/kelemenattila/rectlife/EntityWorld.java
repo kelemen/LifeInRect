@@ -155,8 +155,12 @@ public final class EntityWorld {
 
                 if (attackerCount > 0) {
                     double count = attackerCount + 1;
-                    double defenderChance = (currentDefChanceMul / count) * (count - 1.0);
-                    if (Math.random() < defenderChance) {
+                    // The defender has 1/participant chance to remain alive
+                    // this chance is multiplied by defenderChanceToDie
+                    // reducing its chance of survival (since it is expected to
+                    // be within [0.0, 1.0]).
+                    double defenderChanceToDie = 1.0 - currentDefChanceMul / count;
+                    if (Math.random() < defenderChanceToDie) {
                         setEntity(0, 0, null);
                     }
                     else {
